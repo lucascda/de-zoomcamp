@@ -16,11 +16,16 @@ def main(params):
     port = params.port
     db = params.db
     table_name = params.table_name
-    # url = params.url
+    url = params.url
 
-    csv_name = 'output.csv'
+    # the backup files are gzipped, and it's important to keep the correct extension
+    # for pandas to be able to open the file
+    if url.endswith('.csv.gz'):
+        csv_name = 'output.csv.gz'
+    else:
+        csv_name = 'output.csv'
 
-    # os.system(f"wget {url} -O {csv_name}")
+    os.system(f"wget {url} -O {csv_name}")
 
     # create postgres connection
     engine = create_engine(
@@ -68,7 +73,7 @@ if __name__ == '__main__':
     parser.add_argument('--port', help='postgres port number')
     parser.add_argument('--db', help='postgres database name')
     parser.add_argument('--table_name', help='table name')
-    # parser.add_argument('--url', help='url of the csv file')
+    parser.add_argument('--url', help='url of the csv file')
 
     args = parser.parse_args()
 
