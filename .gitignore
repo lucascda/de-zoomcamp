@@ -1,3 +1,11 @@
 *.csv.gz
 *.csv
 *checkpoint.ipynb
+
+# GCP service keys
+gcp-keys.json
+
+# Terraform files
+**/.terraform/*
+*.tfstate
+*.tfstate.*
