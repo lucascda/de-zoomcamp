@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 # from: jupyter nbconvert --to=script [notebook_file_name]
-# python ingest_data.py --user=root --password=root --host=localhost --port=5430 --db=ny_taxi --table_name=yellow_taxi_trips --url=https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/yellow_tripdata_2021-01.csv.gz
+# python ingest_data.py --table_name=yellow_taxi_trips --url=https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/yellow_tripdata_2021-01.csv.gz
 import pandas as pd
 import argparse
 import os
@@ -10,6 +10,7 @@ from time import time
 from datetime import timedelta
 from prefect import flow, task
 from prefect.tasks import task_input_hash
+from prefect_sqlalchemy import SqlAlchemyConnector
 
 
 @task(log_prints=True)
@@ -51,24 +52,17 @@ def extract_data(url):
 @task(log_prints=True, retries=3)
 def ingest_data(params, df):
 
-    # params from args
-    user = params.user
-    password = params.password
-    host = params.host
-    port = params.port
-    db = params.db
     table_name = params.table_name
 
-    # create postgres connection
-    engine = create_engine(
-        f'postgresql://{user}:{password}@{host}:{port}/{db}')
+    # sql-alchemy prefect block
+    connection_block = SqlAlchemyConnector.load("postgres-connector")
+    with connection_block.get_connection(begin=False) as engine:
+        # create table in postgres
+        df.head(n=0).to_sql(name=table_name,
+                            con=engine, if_exists='replace')
 
-    # create table in postgres
-    df.head(n=0).to_sql(name=table_name,
-                        con=engine, if_exists='replace')
-
-    # insert first dataframe chunk into postgres
-    df.to_sql(name=table_name, con=engine, if_exists='append')
+        # insert first dataframe chunk into postgres
+        df.to_sql(name=table_name, con=engine, if_exists='append')
 
     # insert remaining data to postgres
     # while True:
@@ -101,11 +95,11 @@ def log_subflow(table_name: str):
 def main():
     parser = argparse.ArgumentParser(description='Ingest CSV data to Postgres')
 
-    parser.add_argument('--user', help='postgres user name')
-    parser.add_argument('--password', help='postgres password')
-    parser.add_argument('--host', help='postgres host adress')
-    parser.add_argument('--port', help='postgres port number')
-    parser.add_argument('--db', help='postgres database name')
+    # parser.add_argument('--user', help='postgres user name')
+    # parser.add_argument('--password', help='postgres password')
+    # parser.add_argument('--host', help='postgres host adress')
+    # parser.add_argument('--port', help='postgres port number')
+    # parser.add_argument('--db', help='postgres database name')
     parser.add_argument('--table_name', help='table name')
     parser.add_argument('--url', help='url of the csv file')
 
