@@ -1,5 +1,4 @@
-*.csv.gz
-*.csv
+# Jupyter notebook
 *checkpoint.ipynb
 
 # GCP service keys
@@ -9,3 +8,8 @@ gcp-keys.json
 **/.terraform/*
 *.tfstate
 *.tfstate.*
+
+# Dataset Files
+*.csv.gz
+*.csv
+*.parquet
